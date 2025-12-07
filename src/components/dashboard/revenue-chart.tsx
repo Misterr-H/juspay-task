@@ -5,7 +5,6 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  Legend,
 } from "recharts"
 import { revenueData, revenueWeekTotals } from "@/lib/dashboard-data"
 

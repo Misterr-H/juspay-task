@@ -46,7 +46,7 @@ export function SalesArcChart() {
 
   // Calculate arcs
   let currentAngle = -90 // Start from top
-  const arcs = salesChannelsData.map((item, index) => {
+  const arcs = salesChannelsData.map((item) => {
     const percentage = (item.value / total) * 100
     const arcAngle = (percentage / 100) * 360 - gapAngle
     const startAngle = currentAngle
