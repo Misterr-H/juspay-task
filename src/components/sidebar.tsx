@@ -14,12 +14,13 @@ import {
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 
 interface SidebarProps {
   collapsed: boolean
   onCollapsedChange: (collapsed: boolean) => void
+  onNavigate: (view: 'default' | 'ecommerce') => void
+  activeView: 'default' | 'ecommerce'
 }
 
 interface NavItem {
@@ -52,7 +53,6 @@ const dashboardItems: NavItem[] = [
     title: "Default",
     icon: LayoutDashboard,
     href: "/dashboard/default",
-    active: true,
   },
   {
     title: "eCommerce",
@@ -106,9 +106,9 @@ const pageItems: NavItem[] = [
   },
 ]
 
-export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
+export function Sidebar({ collapsed, onCollapsedChange, onNavigate, activeView }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<"favorites" | "recently">("favorites")
-  const [expandedItems, setExpandedItems] = useState<string[]>([])
+  const [expandedItems, setExpandedItems] = useState<string[]>(["User Profile"])
 
   const toggleExpanded = (title: string) => {
     setExpandedItems((prev) =>
@@ -120,37 +120,56 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     const Icon = item.icon
     const isExpanded = expandedItems.includes(item.title)
     const hasChildren = item.children && item.children.length > 0
+    
+    const handleClick = () => {
+      if (hasChildren) {
+        toggleExpanded(item.title)
+      } else if (item.title === 'Default') {
+        onNavigate('default')
+      } else if (item.title === 'eCommerce') {
+        onNavigate('ecommerce')
+      }
+    }
 
     return (
       <div key={item.title}>
         <button
-          onClick={() => hasChildren && toggleExpanded(item.title)}
+          onClick={handleClick}
           className={cn(
-            "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] font-normal transition-all group",
-            item.active
-              ? "bg-foreground text-background shadow-sm"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            collapsed && "justify-center px-2",
-            level > 0 && !collapsed && "pl-9 text-[13px]"
+            "w-full flex items-center gap-3 py-2 rounded-lg text-[14px] font-normal transition-all group relative",
+            item.active || (item.title === 'Default' && activeView === 'default') || (item.title === 'eCommerce' && activeView === 'ecommerce')
+              ? "bg-muted text-foreground"
+              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+            collapsed ? "justify-center px-2" : "pr-3",
+            level > 0 && !collapsed ? "pl-9 text-[13px]" : !collapsed && "pl-3"
           )}
         >
+          {/* Bold left border for active item */}
+          {(item.active || (item.title === 'Default' && activeView === 'default') || (item.title === 'eCommerce' && activeView === 'ecommerce')) && (
+            <span className="absolute left-0 top-1.5 bottom-0 w-[4px] bg-foreground rounded-full h-3/5" />
+          )}
+          
+          {/* Chevron for collapsible items OR placeholder space for alignment */}
+          {!collapsed && (
+            hasChildren ? (
+              <ChevronRight
+                className={cn(
+                  "h-4 w-4 transition-transform flex-shrink-0",
+                  isExpanded && "rotate-90"
+                )}
+              />
+            ) : (
+              <span className="w-4 flex-shrink-0" />
+            )
+          )}
+          
           {item.showDot && !collapsed ? (
             <span className="h-[6px] w-[6px] rounded-full bg-muted-foreground/50 flex-shrink-0" />
           ) : (
             <Icon className={cn("h-4 w-4 flex-shrink-0")} />
           )}
           {!collapsed && (
-            <>
-              <span className="flex-1 text-left truncate">{item.title}</span>
-              {hasChildren && (
-                <ChevronRight
-                  className={cn(
-                    "h-4 w-4 transition-transform flex-shrink-0",
-                    isExpanded && "rotate-90"
-                  )}
-                />
-              )}
-            </>
+            <span className="flex-1 text-left truncate">{item.title}</span>
           )}
         </button>
         {hasChildren && isExpanded && !collapsed && (
@@ -192,12 +211,9 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
               className={cn(
                 "relative py-2.5 text-[13px] font-normal transition-colors",
                 activeTab === "favorites"
-                  ? "font-medium"
-                  : "hover:opacity-60"
+                  ? "font-medium text-foreground/60"
+                  : "text-foreground/30 hover:opacity-60"
               )}
-              style={{
-                color: activeTab === "favorites" ? "#1C1C1C66" : "#1C1C1C33"
-              }}
             >
               Favorites
             </button>
@@ -206,12 +222,9 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
               className={cn(
                 "relative py-2.5 text-[13px] font-normal transition-colors",
                 activeTab === "recently"
-                  ? "font-medium"
-                  : "hover:opacity-60"
+                  ? "font-medium text-foreground/60"
+                  : "text-foreground/30 hover:opacity-60"
               )}
-              style={{
-                color: activeTab === "recently" ? "#1C1C1C66" : "#1C1C1C33"
-              }}
             >
               Recently
             </button>
@@ -226,7 +239,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         {/* Dashboards Section */}
         <div className="mb-6">
           {!collapsed && (
-            <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <h3 className="px-3 mb-2 text-xs font-normal text-left text-foreground/60">
               Dashboards
             </h3>
           )}
@@ -238,7 +251,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         {/* Pages Section */}
         <div>
           {!collapsed && (
-            <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <h3 className="px-3 mb-2 text-xs font-normal text-left text-foreground/60">
               Pages
             </h3>
           )}
